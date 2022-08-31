@@ -19,6 +19,9 @@ from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 
+import gc
+torch.cuda.empty_cache()
+gc.collect()
 
 def chunk(it, size):
     it = iter(it)
@@ -40,7 +43,7 @@ def load_model_from_config(config, ckpt, verbose=False):
         print("unexpected keys:")
         print(u)
 
-    model.cuda()
+    model.cuda().half()
     model.eval()
     return model
 
@@ -51,7 +54,7 @@ def load_img(path):
     print(f"loaded input image of size ({w}, {h}) from {path}")
     w, h = map(lambda x: x - x % 32, (w, h))  # resize to integer multiple of 32
     image = image.resize((w, h), resample=PIL.Image.LANCZOS)
-    image = np.array(image).astype(np.float32) / 255.0
+    image = np.array(image).astype(np.float16) / 255.0
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
     return 2.*image - 1.
